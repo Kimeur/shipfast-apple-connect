@@ -1,0 +1,78 @@
+{
+  "app": {
+    "name": "My App",
+    "bundleId": "com.example.myapp",
+    "appId": null,
+    "primaryLocale": "en-US"
+  },
+  "team": {
+    "teamId": "REPLACE_ME",
+    "name": "Example Studio"
+  },
+  "xcode": {
+    "project": "MyApp.xcodeproj",
+    "scheme": "MyApp",
+    "developerDir": "/Applications/Xcode-27.1.app/Contents/Developer"
+  },
+  "targets": [
+    { "bundleId": "com.example.myapp", "name": "My App", "profileName": "My App App Store" },
+    { "bundleId": "com.example.myapp.widgets", "name": "My App Widgets", "profileName": "My App Widgets App Store" }
+  ],
+  "listing": "ship/listing.mjs",
+  "baseTerritory": "FRA",
+  "appPrice": "0",
+  "territories": {
+    "exclude": ["CHN"],
+    "availableInNewTerritories": true
+  },
+  "categories": { "primary": "LIFESTYLE", "secondary": "PRODUCTIVITY" },
+  "contentRights": "DOES_NOT_USE_THIRD_PARTY_CONTENT",
+  "ageRating": {},
+  "review": {
+    "notesFile": "ship/review-notes.txt",
+    "demoAccountRequired": false,
+    "contact": { "firstName": "REPLACE_ME", "lastName": "REPLACE_ME", "email": "REPLACE_ME", "phone": "REPLACE_ME" }
+  },
+  "screenshots": {
+    "dir": "Launch/store-screens",
+    "localeSources": { "en-GB": "en-US", "fr-CA": "fr-FR" },
+    "reviewShot": "review/paywall.png"
+  },
+  "submit": {
+    "requiredScreenshots": ["APP_IPHONE_67", "APP_IPAD_PRO_3GEN_129"],
+    "recommendedScreenshots": []
+  },
+  "capture": {
+    "appPath": "build/dd/Build/Products/Debug-iphonesimulator/MyApp.app",
+    "launchArgs": ["-uiTesting", "-demo"],
+    "runSimulator": "iPhone 17",
+    "languages": { "en": "en_US", "fr": "fr_FR" },
+    "wait": 6,
+    "devices": {
+      "iphone": { "simulator": "iPhone 17", "display": "primary" },
+      "ipad": { "simulator": "iPad Pro 13-inch (M5)", "display": "primary" },
+      "duo-inner": { "simulator": "iPhone Duo", "display": "primary-1", "pose": "open" },
+      "duo-outer": { "simulator": "iPhone Duo", "display": "primary", "pose": "closed" }
+    },
+    "shots": [
+      { "name": "home", "args": [] },
+      { "name": "detail", "args": ["-openScreen", "detail"] },
+      { "name": "paywall", "args": ["-paywall"] }
+    ]
+  },
+  "screens": {
+    "shots": ["home", "detail"],
+    "locales": { "en": "en-US", "fr": "fr-FR" },
+    "captions": {
+      "en": { "home": ["Your main promise", "One line that backs it up"], "detail": ["Second benefit", "Short and concrete"] },
+      "fr": { "home": ["Votre promesse", "Une ligne qui la prouve"], "detail": ["Deuxième bénéfice", "Court et concret"] }
+    },
+    "colors": { "ground": "#07080a", "text": "#f2f4f7", "muted": "#a3abb6", "glow": "#461c0c", "line": "#262a31" },
+    "reviewShot": { "raw": "iphone-en", "shot": "paywall" }
+  },
+  "header": {
+    "icon": "MyApp/Assets.xcassets/AppIcon.appiconset/icon-1024.png",
+    "texts": { "en": ["Your main promise", "Three things it does"], "fr": ["Votre promesse", "Trois choses qu'elle fait"] },
+    "shots": { "header": ["detail", "home"], "search": ["detail", "home", "paywall"] }
+  }
+}

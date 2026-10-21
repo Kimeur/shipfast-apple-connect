@@ -1,0 +1,11 @@
+My App does REPLACE_ME in one sentence. No account or login is needed.
+
+HOW TO REACH THE PURCHASES: open the Settings tab and tap "Get My App Pro". The sheet lists Yearly (1-week free trial for new subscribers), Monthly and Lifetime (one-time). Restore purchases is in the Settings tab and on the same sheet.
+
+FREE CONTENT: REPLACE_ME (what works without paying).
+
+IPHONE DUO: closed, it is one column on the outer display; open, it shows two panes split at the fold.
+
+DATA: no ads, no analytics, no tracking. Purchases are recorded by RevenueCat (pseudonymous ID) to keep entitlements in sync; see the privacy policy.
+
+The app is in English and French.

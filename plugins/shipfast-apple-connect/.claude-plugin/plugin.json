@@ -1,0 +1,13 @@
+{
+  "name": "shipfast-apple-connect",
+  "version": "0.1.0",
+  "description": "Ship any iOS app from a build that works to a submission in App Review, through the App Store Connect API: signing, availability, listing, in-app purchases and subscriptions (prices only with the owner's approval), RevenueCat, screenshots for iPhone, iPad and iPhone Duo, upload and submit. Adds /shipfast.",
+  "author": {
+    "name": "Kimeur",
+    "url": "https://github.com/Kimeur"
+  },
+  "homepage": "https://github.com/Kimeur/shipfast-apple-connect",
+  "repository": "https://github.com/Kimeur/shipfast-apple-connect",
+  "license": "MIT",
+  "keywords": ["ios", "iphone", "ipad", "iphone-duo", "app-store", "app-store-connect", "release", "submission", "screenshots", "in-app-purchase", "subscriptions", "revenuecat", "xcode"]
+}

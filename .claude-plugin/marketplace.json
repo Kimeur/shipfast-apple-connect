@@ -1,0 +1,20 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "shipfast-apple-connect",
+  "description": "Claude Code plugin that takes any iOS app from a working build to a submission in App Review through the App Store Connect API. Community project, not affiliated with Apple.",
+  "version": "0.1.0",
+  "owner": {
+    "name": "Kimeur",
+    "url": "https://github.com/Kimeur"
+  },
+  "plugins": [
+    {
+      "name": "shipfast-apple-connect",
+      "source": "./plugins/shipfast-apple-connect",
+      "description": "Release pipeline for iOS apps through the App Store Connect API: signing, availability, listing, products and prices (only with the owner's approval), RevenueCat, screenshots for iPhone, iPad and iPhone Duo, upload and submit. Adds /shipfast.",
+      "version": "0.1.0",
+      "category": "development",
+      "keywords": ["ios", "iphone", "ipad", "iphone-duo", "app-store", "app-store-connect", "release", "screenshots", "in-app-purchase", "revenuecat"]
+    }
+  ]
+}

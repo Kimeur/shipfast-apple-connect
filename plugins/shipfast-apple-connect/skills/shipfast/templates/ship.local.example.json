@@ -1,0 +1,15 @@
+{
+  "ascKey": {
+    "keyId": "REPLACE_ME",
+    "issuerId": "REPLACE_ME",
+    "keyPath": "~/.appstoreconnect/private_keys/AuthKey_REPLACE_ME.p8"
+  },
+  "review": {
+    "contact": {
+      "firstName": "REPLACE_ME",
+      "lastName": "REPLACE_ME",
+      "email": "REPLACE_ME",
+      "phone": "+33 REPLACE_ME"
+    }
+  }
+}
