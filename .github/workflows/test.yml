@@ -1,0 +1,33 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # macOS: the screenshot composer uses the system's SF Pro Rounded font, and the scripts target Xcode tooling.
+    runs-on: macos-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: plugins/shipfast-apple-connect/skills/shipfast
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Pillow
+        run: python3 -m pip install --quiet --break-system-packages Pillow || python3 -m pip install --quiet Pillow
+      - name: Syntax
+        run: |
+          for f in scripts/*.mjs scripts/lib/*.mjs tests/*.mjs templates/*.mjs; do node --check "$f"; done
+          for f in scripts/*.sh; do bash -n "$f"; done
+          python3 -B -m py_compile scripts/*.py scripts/lib/*.py
+          for f in templates/*.json; do python3 -m json.tool "$f" > /dev/null; done
+      - name: Tests (fake App Store Connect, no network)
+        run: node --test tests/*.test.mjs

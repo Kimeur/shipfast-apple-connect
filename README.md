@@ -1,5 +1,7 @@
 # shipfast-apple-connect
 
+[![test](https://github.com/Kimeur/shipfast-apple-connect/actions/workflows/test.yml/badge.svg)](https://github.com/Kimeur/shipfast-apple-connect/actions/workflows/test.yml)
+
 ### Ship any iOS app from "it builds" to "submitted to App Review", with Claude Code and the App Store Connect API.
 
 A Claude Code plugin with one skill, `shipfast`, and one command, `/shipfast`. Small Node scripts drive the App Store Connect API: signing, availability, the listing in every language, in-app purchases and subscriptions, RevenueCat, store screenshots, the upload and the submission. It works for iPhone, iPad and universal apps, and for the foldable iPhone Duo.
@@ -124,7 +126,7 @@ The rules the scripts encode, each from a real submission: [references/lessons.m
 node --test plugins/shipfast-apple-connect/skills/shipfast/tests/*.test.mjs
 ```
 
-The tests run every script against a fake App Store Connect (`tests/mock-asc.mjs`). Nothing leaves the machine. They check, among other things, that no price is written without `--confirm-prices`, that subscriptions get a price in every territory, that `submit.mjs` refuses when a product is missing, in a bad state or not in the draft, and that `--dry` writes nothing.
+The tests run every script against a fake App Store Connect (`tests/mock-asc.mjs`). Nothing leaves the machine. GitHub Actions runs them on every push and pull request. They check, among other things, that no price is written without `--confirm-prices`, that subscriptions get a price in every territory, that `submit.mjs` refuses when a product is missing, in a bad state or not in the draft, and that `--dry` writes nothing.
 
 ## Status
 
