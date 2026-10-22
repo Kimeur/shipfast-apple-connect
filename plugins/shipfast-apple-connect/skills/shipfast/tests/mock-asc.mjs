@@ -1,6 +1,7 @@
 // A fake App Store Connect for the tests, loaded with `node --import ./mock-asc.mjs`.
 // It replaces fetch: nothing leaves the machine. Every request is appended to $MOCK_LOG as one JSON line.
-// $MOCK_SCENARIO (JSON) shapes the answers: { products: [...], firstProductError, availability, priced, build, ... }.
+// $MOCK_SCENARIO (JSON) shapes the answers: { products: [...], firstProductError, availability, priced, build, versionState,
+// appInfo: { state, ageRating, primaryCategory, secondaryCategory }, contentRights, certificates, ... }.
 import { appendFileSync } from 'node:fs';
 
 const S = JSON.parse(process.env.MOCK_SCENARIO ?? '{}');
@@ -28,9 +29,19 @@ function route(method, url, body) {
   if (method === 'GET') {
     if (p === '/v1/apps') return list(S.noApp ? [] : [{ id: 'APP1', type: 'apps', attributes: { bundleId: q['filter[bundleId]'], name: 'Test App' } }]);
     if (p === '/v1/territories') return list(TERRITORIES.map((t) => ({ id: t, type: 'territories' })));
-    if (p === '/v1/apps/APP1/appInfos') return list([{ id: 'AI1', type: 'appInfos', attributes: { state: 'PREPARE_FOR_SUBMISSION' } }]);
-    if (p === '/v1/appInfos/AI1/ageRatingDeclaration') return ok({ data: { id: 'AR1', type: 'ageRatingDeclarations' } });
-    if (p === '/v1/apps/APP1/appStoreVersions') return list([{ id: 'V1', type: 'appStoreVersions', attributes: { versionString: '1.0', appStoreState: 'PREPARE_FOR_SUBMISSION', appVersionState: 'PREPARE_FOR_SUBMISSION' } }]);
+    if (p === '/v1/apps/APP1') return ok({ data: { id: 'APP1', type: 'apps', attributes: { contentRightsDeclaration: S.contentRights ?? null } } });
+    if (p === '/v1/apps/APP1/appInfos') {
+      const ai = S.appInfo ?? {};
+      const cat = (c) => ({ data: c ? { type: 'appCategories', id: c } : null });
+      return list([{ id: 'AI1', type: 'appInfos', attributes: { state: ai.state ?? 'PREPARE_FOR_SUBMISSION' },
+        relationships: { primaryCategory: cat(ai.primaryCategory), secondaryCategory: cat(ai.secondaryCategory) } }]);
+    }
+    if (p === '/v1/appInfos/AI1/ageRatingDeclaration') return ok({ data: { id: 'AR1', type: 'ageRatingDeclarations', attributes: S.appInfo?.ageRating ?? {} } });
+    if (p === '/v1/apps/APP1/appStoreVersions') {
+      const st = S.versionState ?? 'PREPARE_FOR_SUBMISSION';
+      return list([{ id: 'V1', type: 'appStoreVersions', attributes: { versionString: '1.0', appStoreState: st, appVersionState: st } }]);
+    }
+    if (p === '/v1/certificates') return list(S.certificates ?? []);
     if (p === '/v1/apps/APP1/appAvailabilityV2') return S.availability ? ok({ data: { id: 'AV1', type: 'appAvailabilities' } }) : notFound();
     if (p === '/v2/appAvailabilities/AV1/territoryAvailabilities') return list(TERRITORIES.map((t) => ({ id: `TA-${t}`, type: 'territoryAvailabilities', attributes: { available: true }, relationships: { territory: { data: { type: 'territories', id: t } } } })));
     if (p === '/v1/apps/APP1/appPriceSchedule') return ok({ data: { id: 'PS1', type: 'appPriceSchedules' } }); // a new app: a schedule with no price

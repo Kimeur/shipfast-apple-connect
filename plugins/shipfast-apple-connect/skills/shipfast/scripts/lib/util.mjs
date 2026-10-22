@@ -157,6 +157,18 @@ export async function iosVersion(app) {
   return exact ?? versions.find((v) => EDITABLE.has(versionState(v))) ?? null;
 }
 
+/** iosVersion(), or exit with the versions App Store Connect holds when there is none to work on. */
+export async function requireVersion(app) {
+  const version = await iosVersion(app);
+  if (version) return version;
+  const want = typeof flag('version') === 'string' ? flag('version') : appVersion();
+  const versions = (await asc('GET', `/v1/apps/${app}/appStoreVersions?filter[platform]=IOS&limit=20`)).data;
+  const held = versions.map((v) => `${v.attributes.versionString} ${versionState(v)}`).join(', ') || 'none';
+  console.error(`no App Store version ${want} in App Store Connect and none editable (it holds: ${held}).`
+    + ` Create ${want} once App Store Connect allows a new version, or pass --version=<one of them>.`);
+  process.exit(1);
+}
+
 export const md5 = (buf) => createHash('md5').update(buf).digest('hex');
 
 /** Width and height of a PNG, read from its header. */

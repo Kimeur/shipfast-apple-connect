@@ -1,5 +1,5 @@
 // Runs the release scripts against a fake App Store Connect (mock-asc.mjs). Nothing leaves the machine.
-// Usage: node --test tests/
+// Usage: node --test tests/*.test.mjs   (Node 22 does not take a folder)
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { generateKeyPairSync } from 'node:crypto';
@@ -105,6 +105,66 @@ test('app-setup lists every territory in a new availability and posts a free pri
   const price = r.writes.find((w) => w.path === '/v1/appPriceSchedules');
   assert.equal(price?.body.included[0].relationships.appPricePoint.data.id, 'APP-FREE');
 });
+
+test('app-setup leaves age rating, categories and content rights alone when they already match', () => {
+  const dir = fixture();
+  const first = run(dir, 'app-setup.mjs', ['--only=age']);
+  const answers = first.writes.find((w) => w.path.startsWith('/v1/ageRatingDeclarations/'))?.body.data.attributes;
+  assert.ok(answers, first.out);
+  const r = run(dir, 'app-setup.mjs', ['--only=age,categories,rights'], {
+    appInfo: { ageRating: answers, primaryCategory: 'LIFESTYLE', secondaryCategory: 'PRODUCTIVITY' },
+    contentRights: 'DOES_NOT_USE_THIRD_PARTY_CONTENT',
+  });
+  assert.equal(r.code, 0, r.out);
+  assert.equal(r.writes.length, 0, JSON.stringify(r.writes));
+  assert.equal(r.out.match(/up to date/g)?.length, 3, r.out);
+});
+
+test('store-setup does not patch app info localizations while the app info is in review', () => {
+  const r = run(fixture(), 'store-setup.mjs', ['--only=app'], { appInfo: { state: 'WAITING_FOR_REVIEW' } });
+  assert.equal(r.code, 0, r.out);
+  assert.equal(r.writes.length, 0, JSON.stringify(r.writes));
+  assert.match(r.out, /not editable now/);
+});
+
+test('app-setup does not patch an app info that is in review', () => {
+  const r = run(fixture(), 'app-setup.mjs', ['--only=age,categories'], { appInfo: { state: 'WAITING_FOR_REVIEW' } });
+  assert.equal(r.code, 0, r.out);
+  assert.equal(r.writes.length, 0, JSON.stringify(r.writes));
+  assert.match(r.out, /WAITING_FOR_REVIEW: not editable/);
+});
+
+test('screenshots and header name the missing version instead of crashing', () => {
+  const dir = fixture();
+  writeFileSync(join(dir, 'MyApp.xcodeproj', 'project.pbxproj'), 'MARKETING_VERSION = 1.1;\n');
+  for (const script of ['screenshots.mjs', 'header.mjs']) {
+    const r = run(dir, script, ['--dry'], { versionState: 'WAITING_FOR_REVIEW' });
+    assert.equal(r.code, 1, r.out);
+    assert.match(r.out, /no App Store version 1\.1 .*1\.0 WAITING_FOR_REVIEW/, script);
+    assert.doesNotMatch(r.out, /\n\s+at /, `${script} printed a stack trace`);
+  }
+});
+
+test('doctor does not print the API key ID', () => {
+  const r = run(fixture(), 'doctor.mjs', [], { availability: true, priced: true });
+  assert.match(r.out, /API key TES…/, r.out);
+  assert.doesNotMatch(r.out, /AuthKey_TEST/);
+});
+
+test('signing matches the local certificate when Apple drops the serial number leading zero',
+  { skip: spawnSync('openssl', ['version']).status !== 0 && 'openssl missing' }, () => {
+    const dir = fixture();
+    const sign = join(dir, 'build', 'sign');
+    mkdirSync(sign, { recursive: true });
+    const gen = spawnSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', join(sign, 'dist.key'),
+      '-subj', '/CN=Test Distribution', '-days', '2', '-set_serial', '0x0BDF8AF2C396434265947979C12793D8', '-outform', 'DER', '-out', join(sign, 'dist.cer')]);
+    assert.equal(gen.status, 0, String(gen.stderr));
+    const r = run(dir, 'signing.mjs', ['--dry', '--only=cert'], {
+      certificates: [{ id: 'CERT1', type: 'certificates', attributes: { name: 'Apple Distribution: Test', serialNumber: 'BDF8AF2C396434265947979C12793D8', certificateType: 'DISTRIBUTION' } }],
+    });
+    assert.equal(r.code, 0, r.out);
+    assert.match(r.out, /using build\/sign\/dist\.cer \(Apple Distribution: Test/);
+  });
 
 test('submit refuses when a listed product is missing in App Store Connect', () => {
   const r = run(fixture(), 'submit.mjs', ['--submit'], { products: LISTED.slice(0, 2) });

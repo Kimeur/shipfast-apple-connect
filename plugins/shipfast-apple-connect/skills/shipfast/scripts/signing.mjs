@@ -60,9 +60,11 @@ if (want('cert') || want('profiles')) {
   await attempt('certificate', async () => {
     const certs = (await all('/v1/certificates?filter[certificateType]=DISTRIBUTION&limit=50')).data;
     if (existsSync(CER)) {
-      // Match the local certificate to Apple's list by serial number.
-      const serial = run('openssl', ['x509', '-inform', 'DER', '-in', CER, '-noout', '-serial']).trim().split('=')[1]?.toUpperCase();
-      const mine = certs.find((c) => String(c.attributes.serialNumber).toUpperCase() === serial);
+      // Match the local certificate to Apple's list by serial number. openssl pads it to whole bytes
+      // ("0BDF…"), Apple drops leading zeros ("BDF…"): compare without them.
+      const norm = (s) => String(s ?? '').trim().toUpperCase().replace(/^0+/, '');
+      const serial = norm(run('openssl', ['x509', '-inform', 'DER', '-in', CER, '-noout', '-serial']).split('=')[1]);
+      const mine = certs.find((c) => norm(c.attributes.serialNumber) === serial);
       if (!mine) throw new Error(`build/sign/dist.cer (serial ${serial}) is not an active distribution certificate on this team`);
       certId = mine.id;
       return info(`using build/sign/dist.cer (${mine.attributes.name ?? mine.id}, expires ${mine.attributes.expirationDate?.slice(0, 10)})`);

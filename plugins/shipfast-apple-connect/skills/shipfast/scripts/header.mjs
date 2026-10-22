@@ -10,7 +10,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { asc } from './lib/asc.mjs';
 import {
-  DRY, EDITABLE, all, appId, failureLog, flag, get, info, iosVersion, readListing, rel, rootPath, step, uploadAsset,
+  DRY, EDITABLE, all, appId, failureLog, flag, get, info, readListing, rel, requireVersion, rootPath, step, uploadAsset,
   versionState, warn, write,
 } from './lib/util.mjs';
 
@@ -20,8 +20,7 @@ const source = (l) => get(`header.localeSources.${l}`) ?? get(`screenshots.local
 const { attempt, finish } = failureLog();
 
 const APP = await appId();
-const version = await iosVersion(APP);
-if (!version) throw new Error('No App Store version found.');
+const version = await requireVersion(APP);
 console.log(`${get('app.name')} ${APP} · version ${version.attributes.versionString} (${versionState(version)})${DRY ? ' · dry run' : ''}`);
 if (!EDITABLE.has(versionState(version))) {
   console.log('Version not editable (in review or live): nothing placed. Create the next version, then run with --version=<it>.');

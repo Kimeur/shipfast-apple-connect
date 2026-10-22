@@ -121,7 +121,7 @@ The rules the scripts encode, each from a real submission: [references/lessons.m
 ## Tests
 
 ```bash
-node --test plugins/shipfast-apple-connect/skills/shipfast/tests/
+node --test plugins/shipfast-apple-connect/skills/shipfast/tests/*.test.mjs
 ```
 
 The tests run every script against a fake App Store Connect (`tests/mock-asc.mjs`). Nothing leaves the machine. They check, among other things, that no price is written without `--confirm-prices`, that subscriptions get a price in every territory, that `submit.mjs` refuses when a product is missing, in a bad state or not in the draft, and that `--dry` writes nothing.

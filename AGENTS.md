@@ -21,5 +21,5 @@ cd plugins/shipfast-apple-connect/skills/shipfast
 for f in scripts/*.mjs scripts/lib/*.mjs tests/*.mjs templates/*.mjs; do node --check "$f"; done
 for f in scripts/*.sh; do bash -n "$f"; done
 python3 -m py_compile scripts/*.py scripts/lib/*.py
-node --test tests/
+node --test tests/*.test.mjs
 ```
