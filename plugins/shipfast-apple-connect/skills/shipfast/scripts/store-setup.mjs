@@ -30,6 +30,7 @@ info(`${T.sold.length} territories sold${T.exclude.size ? ` (all except ${[...T.
 if (want('app')) {
   const infos = (await asc('GET', `/v1/apps/${APP}/appInfos`)).data;
   const appInfo = infos.find((i) => !['READY_FOR_SALE', 'READY_FOR_DISTRIBUTION'].includes(i.attributes.state ?? i.attributes.appStoreState)) ?? infos[0];
+  const infoState = appInfo.attributes.state ?? appInfo.attributes.appStoreState;
   step('app info localizations (name, subtitle, privacy policy URL)');
   const have = (await all(`/v1/appInfos/${appInfo.id}/appInfoLocalizations?limit=50`)).data;
   for (const [locale, l] of Object.entries(L.locales)) {
@@ -37,6 +38,7 @@ if (want('app')) {
     const ex = have.find((x) => x.attributes.locale === locale);
     await attempt(`appInfoLocalization ${locale}`, async () => {
       if (ex && same(ex.attributes, attrs)) return info(`${locale}: up to date`);
+      if (!EDITABLE.has(infoState)) return warn(`${locale}: differs, but the app info is ${infoState} (not editable now): left as is`);
       if (ex) await write('PATCH', `/v1/appInfoLocalizations/${ex.id}`, { data: { type: 'appInfoLocalizations', id: ex.id, attributes: attrs } });
       else await write('POST', '/v1/appInfoLocalizations', {
         data: { type: 'appInfoLocalizations', attributes: { locale, ...attrs }, relationships: { appInfo: rel('appInfos', appInfo.id) } },

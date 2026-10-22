@@ -92,7 +92,8 @@ if (!OFFLINE) {
   console.log('\nApp Store Connect');
   try {
     const cr = credentials();
-    ok(`API key ${cr.keyId.slice(0, 3)}… (${cr.keyPath.replace(process.env.HOME, '~')})`);
+    const short = `${cr.keyId.slice(0, 3)}…`;
+    ok(`API key ${short} (${cr.keyPath.replace(process.env.HOME, '~').replaceAll(cr.keyId, short)})`);
     const apps = (await asc('GET', `/v1/apps?filter[bundleId]=${encodeURIComponent(get('app.bundleId'))}`)).data
       .filter((a) => a.attributes.bundleId === get('app.bundleId'));
     if (!apps.length) bad(`no app record for ${get('app.bundleId')}: create it on the web (manual step M3)`);
@@ -102,6 +103,11 @@ if (!OFFLINE) {
       if (get('app.appId') && String(get('app.appId')) !== app.id) bad(`app.appId is ${get('app.appId')} but the bundle ID belongs to ${app.id}`);
       const versions = (await asc('GET', `/v1/apps/${app.id}/appStoreVersions?filter[platform]=IOS&limit=5`)).data;
       for (const v of versions) ok(`version ${v.attributes.versionString}: ${versionState(v)}${EDITABLE.has(versionState(v)) ? ' (editable)' : ''}`);
+      let built = null;
+      try { built = appVersion(); } catch { /* reported under Config */ }
+      if (built && !versions.some((v) => v.attributes.versionString === built)) {
+        note(`no App Store version ${built} (MARKETING_VERSION) yet: the release scripts need it, or --version=<an existing one>`);
+      }
       const av = await maybe(`/v1/apps/${app.id}/appAvailabilityV2`);
       av?.data ? ok('availability set') : note('no availability yet (app-setup.mjs)');
       const sched = await maybe(`/v1/apps/${app.id}/appPriceSchedule`);
@@ -113,7 +119,8 @@ if (!OFFLINE) {
       b ? ok(`bundle ID ${t.bundleId}`) : note(`bundle ID ${t.bundleId} not registered yet (signing.mjs --only=bundles)`);
     }
   } catch (e) {
-    bad(`App Store Connect: ${e.message}`);
+    const keyId = process.env.ASC_KEY_ID ?? get('ascKey.keyId');
+    bad(`App Store Connect: ${keyId ? e.message.replaceAll(keyId, `${keyId.slice(0, 3)}…`) : e.message}`);
   }
 }
 

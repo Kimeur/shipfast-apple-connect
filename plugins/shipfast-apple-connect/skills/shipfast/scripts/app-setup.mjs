@@ -1,5 +1,6 @@
 // App-level settings through the API: availability, app price, age rating, categories, content rights.
-// Re-runnable: availability and price are created only when missing; app info is patched to match the config.
+// Re-runnable: availability and price are created only when missing; app info is patched only where it differs
+// from the config, and only while App Store Connect lets it be edited (not while a version is in review).
 //
 // Usage: node app-setup.mjs [--dry] [--only=availability,price,age,categories,rights] [--confirm-prices]
 //
@@ -8,7 +9,9 @@
 // - A new app has an empty price schedule (no manual price): even a free app must POST one.
 // - A paid app price is a price decision: it needs --confirm-prices, like store-setup.mjs.
 import { asc } from './lib/asc.mjs';
-import { DRY, appId, failureLog, flag, get, info, list, maybe, need, rel, step, territories, warn, write } from './lib/util.mjs';
+import {
+  DRY, EDITABLE, appId, failureLog, flag, get, info, list, maybe, need, rel, same, step, territories, warn, write,
+} from './lib/util.mjs';
 
 const ONLY = list('only') ? new Set(list('only')) : null;
 const want = (s) => !ONLY || ONLY.has(s);
@@ -87,8 +90,15 @@ if (want('price')) {
   });
 }
 
-const infos = (await asc('GET', `/v1/apps/${APP}/appInfos`)).data;
+const infos = (await asc('GET', `/v1/apps/${APP}/appInfos?include=primaryCategory,secondaryCategory`)).data;
 const ai = infos.find((i) => !['READY_FOR_SALE', 'READY_FOR_DISTRIBUTION'].includes(i.attributes.state ?? i.attributes.appStoreState)) ?? infos[0];
+const aiState = ai.attributes.state ?? ai.attributes.appStoreState;
+/** Patch the app info only if it can be edited now; otherwise say what would change. */
+const lockedInfo = (what) => {
+  if (EDITABLE.has(aiState)) return false;
+  warn(`app info is ${aiState}: not editable now, ${what} left as is. Re-run once the next version is created.`);
+  return true;
+};
 
 if (want('age')) {
   // Default: nothing objectionable (4+). Override any answer under "ageRating" in the config.
@@ -106,6 +116,8 @@ if (want('age')) {
   step('age rating');
   await attempt('age rating', async () => {
     const ar = (await asc('GET', `/v1/appInfos/${ai.id}/ageRatingDeclaration`)).data;
+    if (same(ar.attributes, answers)) return info('up to date');
+    if (lockedInfo('age rating')) return;
     await write('PATCH', `/v1/ageRatingDeclarations/${ar.id}`, { data: { type: 'ageRatingDeclarations', id: ar.id, attributes: answers } });
     info(`set (${Object.keys(get('ageRating', {})).length} answers overridden by the config)`);
   });
@@ -115,18 +127,27 @@ if (want('categories')) {
   const primary = need('categories.primary');
   const secondary = get('categories.secondary');
   step(`categories: ${primary}${secondary ? `, then ${secondary}` : ''}`);
-  await attempt('categories', () => write('PATCH', `/v1/appInfos/${ai.id}`, { data: { type: 'appInfos', id: ai.id, relationships: {
-    primaryCategory: rel('appCategories', primary),
-    ...(secondary ? { secondaryCategory: rel('appCategories', secondary) } : {}),
-  } } }).then(() => info('set')));
+  await attempt('categories', async () => {
+    const cat = (k) => ai.relationships?.[k]?.data?.id ?? null;
+    if (cat('primaryCategory') === primary && (!secondary || cat('secondaryCategory') === secondary)) return info('up to date');
+    if (lockedInfo('categories')) return;
+    await write('PATCH', `/v1/appInfos/${ai.id}`, { data: { type: 'appInfos', id: ai.id, relationships: {
+      primaryCategory: rel('appCategories', primary),
+      ...(secondary ? { secondaryCategory: rel('appCategories', secondary) } : {}),
+    } } });
+    info('set');
+  });
 }
 
 if (want('rights')) {
   const rights = get('contentRights', 'DOES_NOT_USE_THIRD_PARTY_CONTENT');
   step(`content rights: ${rights}`);
-  await attempt('content rights', () => write('PATCH', `/v1/apps/${APP}`, {
-    data: { type: 'apps', id: APP, attributes: { contentRightsDeclaration: rights } },
-  }).then(() => info('set')));
+  await attempt('content rights', async () => {
+    const app = (await asc('GET', `/v1/apps/${APP}?fields[apps]=contentRightsDeclaration`)).data;
+    if (app.attributes?.contentRightsDeclaration === rights) return info('up to date');
+    await write('PATCH', `/v1/apps/${APP}`, { data: { type: 'apps', id: APP, attributes: { contentRightsDeclaration: rights } } });
+    info('set');
+  });
 }
 
 finish();

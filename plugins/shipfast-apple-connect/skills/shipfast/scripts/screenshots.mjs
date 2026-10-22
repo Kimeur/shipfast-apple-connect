@@ -14,8 +14,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { asc } from './lib/asc.mjs';
 import {
-  DRY, EDITABLE, all, appId, failureLog, flag, get, info, iosVersion, list, maybe, md5, pngSize, pngs, pool,
-  readListing, rootPath, step, uploadAsset, versionState, waitAsset, warn, write,
+  DRY, EDITABLE, all, appId, failureLog, flag, get, info, list, maybe, md5, pngSize, pngs, pool,
+  readListing, requireVersion, rootPath, step, uploadAsset, versionState, waitAsset, warn, write,
 } from './lib/util.mjs';
 
 const DIR = rootPath(get('screenshots.dir', 'Launch/store-screens'));
@@ -33,8 +33,7 @@ const SOURCES = Object.fromEntries(Object.keys(L.locales).map((l) => [l, get(`sc
 
 const { attempt, finish, failures } = failureLog();
 const APP = await appId();
-const version = await iosVersion(APP);
-if (!version) throw new Error('No editable App Store version found.');
+const version = await requireVersion(APP);
 console.log(`${get('app.name')} ${APP} · version ${version.attributes.versionString} (${versionState(version)})${DRY ? ' · dry run' : ''}`);
 
 const sizeOf = (file) => { const { width, height } = pngSize(readFileSync(file)); return `${width}x${height}`; };
