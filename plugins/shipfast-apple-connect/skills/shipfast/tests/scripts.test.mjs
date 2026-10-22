@@ -162,10 +162,10 @@ test('signing matches the local certificate when Apple drops the serial number l
     const sign = join(dir, 'build', 'sign');
     mkdirSync(sign, { recursive: true });
     const gen = spawnSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', join(sign, 'dist.key'),
-      '-subj', '/CN=Test Distribution', '-days', '2', '-set_serial', '0x0BDF8AF2C396434265947979C12793D8', '-outform', 'DER', '-out', join(sign, 'dist.cer')]);
+      '-subj', '/CN=Test Distribution', '-days', '2', '-set_serial', '0x0A1B2C3D4E5F60718293A4B5C6D7E8F9', '-outform', 'DER', '-out', join(sign, 'dist.cer')]);
     assert.equal(gen.status, 0, String(gen.stderr));
     const r = run(dir, 'signing.mjs', ['--dry', '--only=cert'], {
-      certificates: [{ id: 'CERT1', type: 'certificates', attributes: { name: 'Apple Distribution: Test', serialNumber: 'BDF8AF2C396434265947979C12793D8', certificateType: 'DISTRIBUTION' } }],
+      certificates: [{ id: 'CERT1', type: 'certificates', attributes: { name: 'Apple Distribution: Test', serialNumber: 'A1B2C3D4E5F60718293A4B5C6D7E8F9', certificateType: 'DISTRIBUTION' } }],
     });
     assert.equal(r.code, 0, r.out);
     assert.match(r.out, /using build\/sign\/dist\.cer \(Apple Distribution: Test/);
