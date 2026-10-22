@@ -119,7 +119,8 @@ if (!OFFLINE) {
       b ? ok(`bundle ID ${t.bundleId}`) : note(`bundle ID ${t.bundleId} not registered yet (signing.mjs --only=bundles)`);
     }
   } catch (e) {
-    bad(`App Store Connect: ${e.message}`);
+    const keyId = process.env.ASC_KEY_ID ?? get('ascKey.keyId');
+    bad(`App Store Connect: ${keyId ? e.message.replaceAll(keyId, `${keyId.slice(0, 3)}…`) : e.message}`);
   }
 }
 

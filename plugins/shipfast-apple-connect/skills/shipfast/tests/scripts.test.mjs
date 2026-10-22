@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { generateKeyPairSync } from 'node:crypto';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -149,6 +149,11 @@ test('doctor does not print the API key ID', () => {
   const r = run(fixture(), 'doctor.mjs', [], { availability: true, priced: true });
   assert.match(r.out, /API key TES…/, r.out);
   assert.doesNotMatch(r.out, /AuthKey_TEST/);
+  const dir = fixture();
+  rmSync(join(dir, 'AuthKey_TEST.p8'));
+  const missing = run(dir, 'doctor.mjs');
+  assert.match(missing.out, /API key file not found/, missing.out);
+  assert.doesNotMatch(missing.out, /AuthKey_TEST/);
 });
 
 test('signing matches the local certificate when Apple drops the serial number leading zero',
